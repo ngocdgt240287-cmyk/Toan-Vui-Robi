@@ -169,7 +169,13 @@ export default function HomePage() {
         tasks.push({story:t.story,question:t.question,solution:`Bài giải\n${label} ${t.story.includes("khu vườn")?"khu vườn":t.story.includes("sân")?"sân":t.story.includes("khăn")?"tấm khăn":t.story.includes("bồn hoa")?"bồn hoa":t.story.includes("luống rau")?"luống rau":t.story.includes("tấm bảng")?"tấm bảng":t.story.includes("khung tranh")?"khung tranh":t.story.includes("miếng giấy")?"miếng giấy màu":"hình đã cho"} là:\n${formula} = ${base} (${unit})\n${extraLine}Đáp số: ${result} ${unit}.`,answer:String(result),unit});
       }
     }
-    setWordProblems(tasks);
+    // Chuẩn hóa Unicode tiếng Việt để dấu luôn ghép đúng với ký tự, tránh khoảng cách bất thường khi hiển thị.
+    setWordProblems(tasks.map((task) => ({
+      ...task,
+      story: task.story.normalize("NFC"),
+      question: task.question.normalize("NFC"),
+      solution: task.solution.normalize("NFC"),
+    })));
   }
 
   const fractionOperationLabels: Record<FractionOperation, string> = { add: "Cộng", subtract: "Trừ", multiply: "Nhân", divide: "Chia" };
