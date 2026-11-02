@@ -113,30 +113,60 @@ export default function HomePage() {
   const fractionResultDen = fractionRaw[1] / fractionDivisor;
   function createWordProblems() {
     const rand = (min:number, max:number) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const tasks: Array<{story:string;question:string;solution:string;answer:string;unit:string}> = [];
-    const L = Math.max(2, shapeLength), W = Math.max(2, shapeWidth), H = Math.max(2, shapeHeight);
-    for (let i = 0; i < 4; i++) {
-      if (shapeMode === "volume") {
-        const a = rand(2, 8), b = planeShape === "cube" ? a : rand(2, 7), c = planeShape === "cube" ? a : rand(2, 6);
-        const volume = a*b*c;
-        const object = planeShape === "cube" ? "hộp quà hình lập phương" : "bể cá dạng hình hộp chữ nhật";
-        const extra = rand(2, 5);
-        tasks.push({story: i%2===0 ? `Một ${object} có ${planeShape === "cube" ? `độ dài cạnh ${a} cm` : `chiều dài ${a} cm, chiều rộng ${b} cm và chiều cao ${c} cm`}. Người ta dán thêm ${extra} nhãn trang trí bên ngoài hộp.` : `Một ${object} có kích thước ${planeShape === "cube" ? `cạnh ${a} cm` : `dài ${a} cm, rộng ${b} cm, cao ${c} cm`}. Trong cửa hàng còn có ${extra+3} chiếc hộp cùng loại.`, question:`Em hãy tính thể tích của ${object}.`, solution:`Thể tích ${object} là:
-${a} × ${b} × ${c} = ${volume} (cm³).
-Đáp số: ${volume} cm³.`, answer:String(volume), unit:"cm³"});
-      } else if (shapeMode === "area") {
-        const a=rand(3,12), b=planeShape === "square" ? a : rand(2,10), extra=rand(2,9), area=a*b;
-        const obj=planeShape === "square" ? "tấm bìa hình vuông" : "mảnh vườn hình chữ nhật";
-        tasks.push({story:`${i%2===0?`Một ${obj} có ${planeShape === "square"?`cạnh dài ${a} cm`:`chiều dài ${a} m và chiều rộng ${b} m`}.`:`Bác An có ${extra} cây hoa và trồng đều trên một ${obj} có ${planeShape === "square"?`cạnh ${a} cm`:`chiều dài ${a} m, chiều rộng ${b} m`}.`}`,question:`Tính diện tích ${obj}.`,solution:`Diện tích ${obj} là:
-${a} × ${b} = ${area} (${planeShape === "square"?"cm²":"m²"}).
-Đáp số: ${area} ${planeShape === "square"?"cm²":"m²"}.`,answer:String(area),unit:planeShape === "square"?"cm²":"m²"});
-      } else {
-        const a=rand(3,15), b=planeShape === "square" ? a : rand(2,12), extra=rand(2,8), perimeter=planeShape === "square"?4*a:2*(a+b);
-        const obj=planeShape === "square"?"sân chơi hình vuông":"mảnh vườn hình chữ nhật";
-        tasks.push({story:`${i%2===0?`Một ${obj} có ${planeShape === "square"?`độ dài cạnh ${a} cm`:`chiều dài ${a} cm và chiều rộng ${b} cm`}.`:`Người ta dự định rào xung quanh một ${obj} có ${planeShape === "square"?`cạnh ${a} cm`:`chiều dài ${a} cm, chiều rộng ${b} cm`}. Cổng ra vào rộng ${extra} cm.`}`,question:i%2===0?`Tính chu vi ${obj}.`:`Cần bao nhiêu xăng-ti-mét hàng rào nếu không tính phần cổng rộng ${extra} cm?`,solution:`Chu vi ${obj} là:
-${planeShape === "square"?`${a} × 4`:`(${a} + ${b}) × 2`} = ${perimeter} (cm).${i%2===0?"":`
-Chiều dài hàng rào cần dùng là: ${perimeter} − ${extra} = ${perimeter-extra} (cm).`}
-Đáp số: ${i%2===0?perimeter:perimeter-extra} cm.`,answer:String(i%2===0?perimeter:perimeter-extra),unit:"cm"});
+    const shuffle = <T,>(items:T[]) => [...items].sort(() => Math.random() - 0.5);
+    type Task = {story:string;question:string;solution:string;answer:string;unit:string};
+    const tasks: Task[] = [];
+    const isVolume = shapeMode === "volume";
+    const isSquare = planeShape === "square" || planeShape === "cube";
+    const count = isVolume ? 4 : 20;
+    const templates: Array<(...args:number[])=>{story:string;question:string;extra?:number;context?:string}> = shapeMode === "area"
+      ? [
+          (a:number,b:number)=>({story:`Một mảnh vườn hình ${isSquare?"vuông":"chữ nhật"} được chuẩn bị để trồng rau. ${isSquare?`Mỗi cạnh dài ${a} m.`:`Mảnh vườn dài ${a} m và rộng ${b} m.`}`,question:"Tính diện tích mảnh vườn đó.",context:"mảnh vườn"}),
+          (a:number,b:number)=>({story:`Một tấm thảm hình ${isSquare?"vuông":"chữ nhật"} dùng để trải ở góc đọc sách. ${isSquare?`Tấm thảm có cạnh ${a} m.`:`Tấm thảm dài ${a} m, rộng ${b} m.`}`,question:"Tính diện tích tấm thảm.",context:"tấm thảm"}),
+          (a:number,b:number)=>({story:`Cô giáo chuẩn bị một tấm bìa hình ${isSquare?"vuông":"chữ nhật"} để làm bảng học tập. ${isSquare?`Tấm bìa có cạnh ${a} cm.`:`Tấm bìa dài ${a} cm và rộng ${b} cm.`}`,question:"Tính diện tích tấm bìa.",context:"tấm bìa"}),
+          (a:number,b:number)=>({story:`Một nền phòng học hình ${isSquare?"vuông":"chữ nhật"} cần được lát gạch. ${isSquare?`Phòng có cạnh ${a} m.`:`Phòng dài ${a} m và rộng ${b} m.`}`,question:"Tính diện tích nền phòng học.",context:"nền phòng học"}),
+          (a:number,b:number)=>({story:`Bác làm vườn dành một khu đất hình ${isSquare?"vuông":"chữ nhật"} để trồng hoa. ${isSquare?`Cạnh khu đất dài ${a} m.`:`Khu đất dài ${a} m, rộng ${b} m.`}`,question:"Khu đất trồng hoa có diện tích bao nhiêu mét vuông?",context:"khu đất trồng hoa"}),
+          (a:number,b:number)=>({story:`Một tấm khăn trải bàn hình ${isSquare?"vuông":"chữ nhật"} có kích thước ${isSquare?`cạnh ${a} dm`:`dài ${a} dm, rộng ${b} dm`}.`,question:"Tính diện tích tấm khăn.",context:"tấm khăn"}),
+          (a:number,b:number)=>({story:`Sân chơi của lớp có dạng hình ${isSquare?"vuông":"chữ nhật"}. ${isSquare?`Mỗi cạnh dài ${a} m.`:`Sân dài ${a} m và rộng ${b} m.`}`,question:"Tính diện tích sân chơi.",context:"sân chơi"}),
+          (a:number,b:number)=>({story:`Một miếng giấy màu hình ${isSquare?"vuông":"chữ nhật"} được dùng để trang trí. ${isSquare?`Cạnh miếng giấy dài ${a} cm.`:`Miếng giấy dài ${a} cm, rộng ${b} cm.`}`,question:"Diện tích miếng giấy màu là bao nhiêu?",context:"miếng giấy màu"}),
+          (a:number,b:number)=>({story:`Một ô cửa kính hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} dm`:`chiều dài ${a} dm và chiều rộng ${b} dm`}.`,question:"Tính diện tích mặt kính.",context:"mặt kính"}),
+          (a:number,b:number)=>({story:`Một khu đất nhỏ hình ${isSquare?"vuông":"chữ nhật"} được phủ cỏ nhân tạo. ${isSquare?`Cạnh khu đất là ${a} m.`:`Khu đất dài ${a} m và rộng ${b} m.`}`,question:"Cần phủ cỏ trên diện tích bao nhiêu mét vuông?",context:"khu đất"})
+        ]
+      : [
+          (a:number,b:number,e:number)=>({story:`Một khu vườn hình ${isSquare?"vuông":"chữ nhật"} cần được rào xung quanh. ${isSquare?`Cạnh vườn dài ${a} m.`:`Vườn dài ${a} m và rộng ${b} m.`}`,question:"Cần bao nhiêu mét hàng rào để rào kín khu vườn?",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một sân chơi hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} m`:`chiều dài ${a} m, chiều rộng ${b} m`}. Người ta muốn kẻ một đường viền xung quanh sân.`,question:"Tính độ dài đường viền xung quanh sân.",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một khung tranh hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} cm`:`chiều dài ${a} cm và chiều rộng ${b} cm`}.`,question:"Cần bao nhiêu xăng-ti-mét nẹp để viền quanh khung tranh?",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một mảnh đất hình ${isSquare?"vuông":"chữ nhật"} được rào lại. ${isSquare?`Cạnh mảnh đất dài ${a} m.`:`Mảnh đất dài ${a} m, rộng ${b} m.`} Người ta chừa một lối đi rộng ${e} m không rào.`,question:"Hỏi cần dùng bao nhiêu mét hàng rào?",extra:e}),
+          (a:number,b:number,e:number)=>({story:`Một bồn hoa hình ${isSquare?"vuông":"chữ nhật"} được viền bằng dây trang trí. ${isSquare?`Cạnh bồn hoa là ${a} dm.`:`Bồn hoa dài ${a} dm, rộng ${b} dm.`}`,question:"Tính độ dài dây cần dùng để viền một vòng quanh bồn hoa.",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một tấm bảng hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} cm`:`chiều dài ${a} cm và chiều rộng ${b} cm`}.`,question:"Tính chu vi tấm bảng.",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một sân nhà hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} m`:`dài ${a} m, rộng ${b} m`}. Gia đình muốn lắp nẹp bảo vệ quanh mép sân.`,question:"Cần bao nhiêu mét nẹp để lắp quanh sân?",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một luống rau hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} m`:`chiều dài ${a} m, chiều rộng ${b} m`}.`,question:"Tính chu vi luống rau để chuẩn bị dây phân cách.",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một chiếc khăn hình ${isSquare?"vuông":"chữ nhật"} có ${isSquare?`cạnh ${a} dm`:`dài ${a} dm và rộng ${b} dm`}.`,question:"Tính độ dài đường may viền xung quanh khăn.",extra:0}),
+          (a:number,b:number,e:number)=>({story:`Một bãi cỏ hình ${isSquare?"vuông":"chữ nhật"} được đánh dấu bằng dây. ${isSquare?`Cạnh bãi cỏ dài ${a} m.`:`Bãi cỏ dài ${a} m và rộng ${b} m.`}`,question:"Tính độ dài dây cần dùng để đánh dấu xung quanh bãi cỏ.",extra:0})
+        ];
+
+    if (isVolume) {
+      for (let i=0;i<count;i++) {
+        const a=rand(2,10), b=planeShape==="cube"?a:rand(2,9), c=planeShape==="cube"?a:rand(2,8), value=a*b*c;
+        const obj=planeShape==="cube"?"hộp quà hình lập phương":"bể cá hình hộp chữ nhật";
+        tasks.push({story:`Một ${obj} có ${planeShape==="cube"?`cạnh dài ${a} cm`:`chiều dài ${a} cm, chiều rộng ${b} cm và chiều cao ${c} cm`}.`,question:`Tính thể tích ${obj}.`,solution:`Bài giải\nThể tích ${obj} là:\n${a} × ${b} × ${c} = ${value} (cm³)\nĐáp số: ${value} cm³.`,answer:String(value),unit:"cm³"});
+      }
+    } else {
+      const used = new Set<string>();
+      const shuffledTemplates = shuffle(templates);
+      for (let i=0;i<count;i++) {
+        const a=isSquare?rand(3,30):rand(3,30), b=isSquare?a:rand(2,25), extra=rand(1,5);
+        const t=shuffledTemplates[i%shuffledTemplates.length](a,b,extra) as {story:string;question:string;extra?:number};
+        const unitBase=t.story.includes(" cm")?"cm":t.story.includes(" dm")?"dm":"m";
+        const unit=shapeMode==="area"?`${unitBase}²`:unitBase;
+        const base=shapeMode==="area"?a*b:(isSquare?4*a:2*(a+b));
+        const result=shapeMode==="perimeter"&&t.extra?base-t.extra:base;
+        const key=`${shapeMode}-${a}-${b}-${t.story}`;
+        if(used.has(key)){i--;continue;} used.add(key);
+        const formula=shapeMode==="area"?(isSquare?`${a} × ${a}`:`${a} × ${b}`):(isSquare?`${a} × 4`:`(${a} + ${b}) × 2`);
+        const label=shapeMode==="area"?"Diện tích":"Chu vi";
+        const extraLine=t.extra?`\nĐộ dài hàng rào cần dùng là:\n${base} − ${t.extra} = ${result} (m)\n`:"";
+        tasks.push({story:t.story,question:t.question,solution:`Bài giải\n${label} ${t.story.includes("khu vườn")?"khu vườn":t.story.includes("sân")?"sân":t.story.includes("khăn")?"tấm khăn":t.story.includes("bồn hoa")?"bồn hoa":t.story.includes("luống rau")?"luống rau":t.story.includes("tấm bảng")?"tấm bảng":t.story.includes("khung tranh")?"khung tranh":t.story.includes("miếng giấy")?"miếng giấy màu":"hình đã cho"} là:\n${formula} = ${base} (${unit})\n${extraLine}Đáp số: ${result} ${unit}.`,answer:String(result),unit});
       }
     }
     setWordProblems(tasks);
@@ -232,7 +262,7 @@ Chiều dài hàng rào cần dùng là: ${perimeter} − ${extra} = ${perimeter
                 {planeShape==="triangle" && <label className="range-label">Cạnh thứ ba: <b>{shapeHeight} cm</b><input type="range" min="1" max="100" value={shapeHeight} onChange={e=>setShapeHeight(Number(e.target.value))}/></label>}
                 {(planeShape==="rectangle" || planeShape==="square") && <small className="drag-hint">Em cũng có thể kéo các nút tròn trên hình để thay đổi độ dài cạnh.</small>}
               </>}
-              <button className="button primary" onClick={createWordProblems} disabled={shapeMode!=="volume" && planeShape!=="square" && planeShape!=="rectangle"}>🎲 Tạo 4 bài toán ngẫu nhiên</button>
+              <button className="button primary" onClick={createWordProblems} disabled={shapeMode!=="volume" && planeShape!=="square" && planeShape!=="rectangle"}>🎲 Tạo 20 bài toán ngẫu nhiên</button>
             </div>
             <div className="shape-visuals">
               <div className="shape-panel geometry-panel"><strong>{shapeMode==="volume"?(planeShape==="cube"?"Hình lập phương":"Hình hộp chữ nhật"):({rectangle:"Hình chữ nhật",square:"Hình vuông",triangle:"Hình tam giác",trapezoid:"Hình tứ giác",cuboid:"Hình hộp chữ nhật",cube:"Hình lập phương"})[planeShape]}</strong>
@@ -240,7 +270,7 @@ Chiều dài hàng rào cần dùng là: ${perimeter} − ${extra} = ${perimeter
                 <small>{shapeMode==="volume"?"Thể tích cho biết phần không gian mà hình khối chiếm chỗ.":"Kéo nút tròn ở cạnh phải để đổi chiều dài; kéo nút ở cạnh dưới để đổi chiều rộng. Các cạnh có thể điều chỉnh từ 1 đến 100 cm; số đo và kết quả cập nhật ngay."}</small>
               </div>
               <div className="shape-results"><div><span>{shapeMode==="volume"?"Thể tích":shapeMode==="area"?"Diện tích":"Chu vi"}</span><b>{shapeMode==="volume"?shapeLength*(planeShape==="cube"?shapeLength:shapeWidth)*(planeShape==="cube"?shapeLength:shapeHeight):planeShape==="square"?(shapeMode==="area"?shapeLength*shapeLength:4*shapeLength):planeShape==="rectangle"?(shapeMode==="area"?shapeLength*shapeWidth:2*(shapeLength+shapeWidth)):"Dùng để quan sát"} {shapeMode==="volume"?"cm³":shapeMode==="area"?(planeShape==="square"||planeShape==="rectangle"?"cm²":""):(planeShape==="square"||planeShape==="rectangle"?"cm":"")}</b></div></div>
-              {wordProblems.length>0 && <div className="word-problem-list"><h4>4 bài toán dành cho em</h4>{wordProblems.map((problem,i)=><details className="word-problem" key={`${i}-${problem.answer}`}><summary><b>Bài {i+1}:</b> {problem.story}</summary><p>{problem.question}</p><details className="solution-details"><summary>Xem lời giải và đáp số</summary><p style={{whiteSpace:"pre-line"}}>{problem.solution}</p></details></details>)}</div>}
+              {wordProblems.length>0 && <div className="word-problem-list"><h4>{wordProblems.length} bài toán dành cho em</h4>{wordProblems.map((problem,i)=><details className="word-problem" key={`${i}-${problem.answer}`}><summary><b>Bài {i+1}:</b> {problem.story}</summary><p>{problem.question}</p><details className="solution-details"><summary>Xem lời giải và đáp số</summary><p className="solution-paper">{problem.solution}</p></details></details>)}</div>}
               <p className="tip">Thể tích được giới thiệu qua hình lập phương và hình hộp chữ nhật, sử dụng số đo đơn giản và đơn vị cm³. Với chu vi, diện tích, hãy chọn hình vuông hoặc hình chữ nhật để tạo bài toán; tam giác và tứ giác hiện dùng để quan sát hình.</p>
             </div>
           </div>}
@@ -299,13 +329,6 @@ function TangramWorkshop() {
       <span className="eyebrow">GÓC SÁNG TẠO · THỬ THÁCH TANGRAM</span>
       <h3>Thỏa sức sáng tạo với 7 mảnh Tangram ✨</h3>
       <p>Quan sát hình mẫu ở phía trên, sau đó kéo 7 mảnh vào vùng ghép rộng bên dưới. Em có thể đặt các mảnh ở bất cứ vị trí nào, chọn từng mảnh để xoay hoặc lật.</p>
-      <div className="tangram-actions">
-        <button className="button secondary" onClick={rotate} disabled={selected===null}>↻ Xoay mảnh 45°</button>
-        <button className="button secondary" onClick={flip} disabled={selected===null}>⇋ Lật mảnh</button>
-        <button className="button secondary" onClick={()=>{if(selected!==null){setPoses(old=>({...old,[selected]:{...(old[selected]??{x:50,y:50,rotation:0,flipped:false}),placed:false}}));setFeedback("");}}} disabled={selected===null}>↩ Trả mảnh về khay</button>
-        <button className="button secondary" onClick={reset}>Làm lại</button>
-      </div>
-      <p className="tangram-progress">{selected===null?"Chọn một mảnh ở khay hoặc trên vùng ghép.":`Đang chọn: ${tangramPieces[selected].name}.`}</p>
     </div>
     <section className="tangram-models" aria-label="Tải hình mẫu Tangram">
       <div className="tangram-section-heading"><b>1. TẢI HÌNH MẪU TỪ THƯ VIỆN</b><small>Chọn ảnh có sẵn trong thiết bị của em</small></div>
@@ -327,7 +350,16 @@ function TangramWorkshop() {
       <p className="tangram-progress">Có thể chọn ảnh PNG, JPG, WEBP hoặc GIF (tối đa 10 MB). Ảnh chỉ được hiển thị trong phiên làm việc hiện tại.</p>
     </section>
     <section className="tangram-board-wrap tangram-free-board-section">
-      <div className="tangram-board-heading"><b>2. VÙNG GHÉP TỰ DO</b><small>{tangramPieces.filter((_,i)=>poses[i]?.placed).length}/7 mảnh đã kéo vào</small></div>
+      <div className="tangram-board-heading tangram-board-toolbar-row">
+        <div className="tangram-board-title"><b>2. VÙNG GHÉP TỰ DO</b><small>{tangramPieces.filter((_,i)=>poses[i]?.placed).length}/7 mảnh đã kéo vào</small></div>
+        <div className="tangram-actions tangram-board-actions">
+          <button className="button secondary" onClick={rotate} disabled={selected===null}>↻ Xoay 45°</button>
+          <button className="button secondary" onClick={flip} disabled={selected===null}>⇋ Lật mảnh</button>
+          <button className="button secondary" onClick={()=>{if(selected!==null){setPoses(old=>({...old,[selected]:{...(old[selected]??{x:50,y:50,rotation:0,flipped:false}),placed:false}}));setFeedback("");}}} disabled={selected===null}>↩ Trả về khay</button>
+          <button className="button secondary" onClick={reset}>Làm lại</button>
+        </div>
+      </div>
+      <p className="tangram-progress tangram-toolbar-status">{selected===null?"Chọn một mảnh ở khay hoặc trên vùng ghép.":`Đang chọn: ${tangramPieces[selected].name}.`}</p>
       <div className="tangram-free-board" onDragOver={e=>e.preventDefault()} onDrop={e=>{const id=Number(e.dataTransfer.getData("text/tangram-piece"));if(Number.isInteger(id))placePiece(id,e);}}>
         <span className="tangram-board-watermark">KÉO – XOAY – LẬT – GHÉP THEO CÁCH CỦA EM</span>
         {tangramPieces.map((piece,i)=>{const pose=poses[i];return pose?.placed?<div key={i} draggable onDragStart={e=>{e.dataTransfer.setData("text/tangram-piece",String(i));setSelected(i);}} onClick={()=>setSelected(i)} className={`tangram-free-piece ${selected===i?"selected-piece":""} ${piece.shape}`} style={{left:`${pose.x}%`,top:`${pose.y}%`,background:piece.color,clipPath:piece.clip,transform:`translate(-50%,-50%) rotate(${pose.rotation}deg) scaleX(${pose.flipped?-1:1})`}} title={`${piece.name} – kéo để di chuyển`} aria-label={piece.name}/> : null;})}

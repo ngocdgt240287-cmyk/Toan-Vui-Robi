@@ -127,3 +127,40 @@
 .tangram-empty-model{display:flex;flex-direction:column;align-items:center;gap:7px;min-height:130px;justify-content:center;border:2px dashed #cbd5e1;border-radius:14px;background:#fff;color:#64748b;text-align:center;padding:16px}
 .tangram-empty-model>span{font-size:2rem}
 @media(max-width:650px){.tangram-uploaded-preview{align-items:flex-start;flex-direction:column}.tangram-uploaded-preview img{width:100%;max-height:190px}}
+
+
+/* Bài giải trình bày như vở toán, căn giữa từng dòng */
+.solution-paper{
+  white-space:pre-line;
+  text-align:center;
+  line-height:1.9;
+  padding:14px 18px;
+  margin:12px auto 0 !important;
+  max-width:680px;
+  color:#26354d;
+  background:#fff;
+  border:1px solid #e5eaf2;
+  border-radius:12px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:1.02rem;
+}
+.solution-paper::first-line{font-weight:700}
+
+/* Đưa bộ điều khiển Tangram sát vùng thao tác */
+.tangram-board-toolbar-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.tangram-board-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tangram-board-actions{margin:0;align-items:center;justify-content:flex-end}
+.tangram-toolbar-status{margin:6px 0 10px}
+@media(max-width:760px){
+  .tangram-board-toolbar-row{align-items:stretch}
+  .tangram-board-title{width:100%}
+  .tangram-board-actions{justify-content:flex-start}
+  .tangram-board-actions .button{flex:1 1 auto}
+  .solution-paper{font-size:.96rem;padding:12px 8px}
+}
